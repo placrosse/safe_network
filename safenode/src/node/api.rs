@@ -21,7 +21,10 @@ use crate::{
         },
         wallet::LocalWallet,
     },
-    network::{close_group_majority, MsgResponder, NetworkEvent, SwarmDriver, SwarmLocalState},
+    network::{
+        close_group_majority, MsgResponder, NetworkEvent, SwarmDriver, SwarmLocalState,
+        CLOSE_GROUP_SIZE,
+    },
     protocol::{
         error::Error as ProtocolError,
         messages::{
@@ -133,10 +136,14 @@ impl Node {
                 self.events_channel.broadcast(NodeEvent::ConnectedToNetwork);
                 // The purpose of this get_closest block is just to get the node try
                 // to discover other nodes.
-                // So, no need to get_closest for each peer, just pick one (or a subset,
-                // say number_nodes/8) random peer to get_closest shall be enough.
-                if let Some(peer) = peers.first() {
-                    let key = NetworkKey::from_peer(*peer);
+                // So, no need to get_closest for every peer, just pick a subset,
+                // say number_nodes / 8, i.e. a few random peers. Shall be enough.
+
+                let num_of_targets = usize::min(1, peers.len() / CLOSE_GROUP_SIZE);
+                let peers = (0..num_of_targets).map(|i| peers[i * 8]);
+
+                for peer in peers {
+                    let key = NetworkKey::from_peer(peer);
                     let network = self.network.clone();
                     let _handle = spawn(async move {
                         trace!("Getting closest peers for target {key:?}...");
