@@ -248,10 +248,10 @@ impl SpendStorage {
             Ok(bytes) => {
                 let (a_spend, b_spend): (SignedSpend, SignedSpend) = deserialize(&bytes)?;
                 if a_spend.dbc_id() != b_spend.dbc_id() {
-                    return Err(Error::NotADoubleSpendAttempt(
-                        Box::new(a_spend),
-                        Box::new(b_spend),
-                    ));
+                    return Err(Error::NotADoubleSpendAttempt {
+                        one: Box::new(a_spend),
+                        other: Box::new(b_spend),
+                    });
                 }
                 if address == &dbc_address(a_spend.dbc_id()) {
                     Ok((a_spend, b_spend))
