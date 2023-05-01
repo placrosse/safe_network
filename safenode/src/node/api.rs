@@ -129,20 +129,14 @@ impl Node {
             NetworkEvent::RequestReceived { req, channel } => {
                 self.handle_request(req, channel).await?
             }
-            NetworkEvent::PeerAdded(peer) => {
-                self.events_channel.broadcast(NodeEvent::ConnectedToNetwork);
-                let key = NetworkKey::from_peer(peer);
-                let network = self.network.clone();
-                let _handle = spawn(async move {
-                    trace!("Getting closest peers for target {key:?}...");
-                    let result = network.node_get_closest_peers(&key).await;
-                    trace!("Closest peers to {key:?} got: {result:?}.");
-                });
-            }
             NetworkEvent::PeersAdded(peers) => {
                 self.events_channel.broadcast(NodeEvent::ConnectedToNetwork);
-                for peer in peers {
-                    let key = NetworkKey::from_peer(peer);
+                // The purpose of this get_closest block is just to get the node try
+                // to discover other nodes.
+                // So, no need to get_closest for each peer, just pick one (or a subset,
+                // say number_nodes/8) random peer to get_closest shall be enough.
+                if let Some(peer) = peers.first() {
+                    let key = NetworkKey::from_peer(*peer);
                     let network = self.network.clone();
                     let _handle = spawn(async move {
                         trace!("Getting closest peers for target {key:?}...");

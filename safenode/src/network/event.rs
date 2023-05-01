@@ -85,8 +85,6 @@ pub enum NetworkEvent {
         channel: MsgResponder,
     },
     /// Emitted when the DHT is updated
-    PeerAdded(PeerId),
-    /// Emitted when the DHT is updated
     PeersAdded(Vec<PeerId>),
     /// Started listening on a new address
     NewListenAddr(Multiaddr),
@@ -176,7 +174,7 @@ impl SwarmDriver {
                 } => {
                     if *is_new_peer {
                         self.event_sender
-                            .send(NetworkEvent::PeerAdded(*peer))
+                            .send(NetworkEvent::PeersAdded(vec![*peer]))
                             .await?;
                     }
                 }
