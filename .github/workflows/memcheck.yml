@@ -134,6 +134,10 @@ jobs:
           echo "Sent $replication_attempt_count chunk copies"
           replication_count=$(rg "Chunk received for replication" ~/.safe -c --stats | rg "(\d+) matches" | rg "\d+" -o)
           echo "Received $replication_count chunk copies"
+          sent_replication_requests=$(rg "performing a replication query" ~/.safe -c --stats | rg "(\d+) matches" | rg "\d+" -o)
+          echo "Sent $sent_replication_requests RequestReplication due to inactivity"
+          received_replication_requests=$(rg "RequestReplication received from" ~/.safe -c --stats | rg "(\d+) matches" | rg "\d+" -o)
+          echo "Received $received_replication_requests RequestReplication triggered by peer inactivity"
           node_count=$(ls $log_dir | wc -l)
           if [ $replication_count -lt $node_count ]; then
             echo "Replication count of: $replication_count is less than the node count of: $node_count"
