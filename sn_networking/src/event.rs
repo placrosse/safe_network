@@ -96,6 +96,10 @@ pub enum MsgResponder {
 #[derive(Debug)]
 /// Events forwarded by the underlying Network; to be used by the upper layers
 pub enum NetworkEvent {
+    /// Dialing initial peers and attempting to connect to the network
+    AttemptingNetworkConnection,
+    /// Failed to dial initial peers and connect to the network
+    NetworkConnectionTimingOut,
     /// Incoming `Request` from a peer
     RequestReceived {
         /// Request
@@ -289,7 +293,14 @@ impl SwarmDriver {
             SwarmEvent::Dialing {
                 peer_id,
                 connection_id,
-            } => trace!("Dialing {peer_id:?} on {connection_id:?}"),
+            } => {
+                self.num_dials += 1;
+                trace!("Total number of dial events: {}", self.num_dials);
+                if self.num_dials == 1 {
+                    self.send_event(NetworkEvent::AttemptingNetworkConnection);
+                }
+                trace!("Dialing {peer_id:?} on {connection_id:?}");
+            }
 
             SwarmEvent::Behaviour(NodeEvent::Autonat(event)) => match event {
                 autonat::Event::InboundProbe(e) => debug!("AutoNAT inbound probe: {e:?}"),

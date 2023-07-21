@@ -156,6 +156,12 @@ impl Node {
         initial_join_underway_or_done: Arc<AtomicBool>,
     ) {
         match event {
+            NetworkEvent::AttemptingNetworkConnection => {
+                self.events_channel.broadcast(NodeEvent::AttemptingNetworkConnection);
+            }
+            NetworkEvent::NetworkConnectionTimingOut => {
+                self.events_channel.broadcast(NodeEvent::NetworkConnectionTimingOut);
+            }
             NetworkEvent::RequestReceived { req, channel } => {
                 trace!("RequestReceived: {req:?}");
                 self.handle_request(req, channel).await;

@@ -43,6 +43,10 @@ impl NodeEventsChannel {
 /// Type of events broadcasted by the node to the public API.
 #[derive(Clone, Debug)]
 pub enum NodeEvent {
+    /// Dialing an initial peer and attempting to connect to the network
+    AttemptingNetworkConnection,
+    /// Attempt to dial initial peers and connect to network is timing out after a period of time
+    NetworkConnectionTimingOut,
     /// The node has been connected to the network
     ConnectedToNetwork,
     /// A Chunk has been stored in local storage

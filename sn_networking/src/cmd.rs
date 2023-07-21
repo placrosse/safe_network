@@ -351,6 +351,12 @@ impl SwarmDriver {
     /// Dials the given multiaddress. If address contains a peer ID, simultaneous
     /// dials to that peer are prevented.
     pub(crate) fn dial(&mut self, mut addr: Multiaddr) -> Result<(), DialError> {
+        self.num_dials += 1;
+        trace!("Total number of dial events: {}", self.num_dials);
+        if self.num_dials == 1 {
+            self.send_event(NetworkEvent::AttemptingNetworkConnection);
+        }
+
         debug!(%addr, "Dialing manually");
 
         let peer_id = multiaddr_pop_p2p(&mut addr);

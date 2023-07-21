@@ -221,6 +221,9 @@ impl Client {
                 self.peers_added += 1;
             }
             NetworkEvent::PeerRemoved(_) | NetworkEvent::UnverifiedRecord(_) => {}
+            // These events are only applicable to the node
+            NetworkEvent::AttemptingNetworkConnection => {},
+            NetworkEvent::NetworkConnectionTimingOut => {},
         }
 
         Ok(())

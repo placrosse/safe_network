@@ -17,7 +17,7 @@ use libp2p::{identity::Keypair, Multiaddr, PeerId};
 #[cfg(feature = "metrics")]
 use sn_logging::metrics::init_metrics;
 use sn_logging::{parse_log_format, LogFormat, LogOutputDest};
-use sn_node::{Marker, Node, NodeEvent, NodeEventsReceiver};
+use sn_node::{Marker, Node, NodeEvent, NodeEventsReceiver, NodeEventsChannel};
 use sn_peers_acquisition::{parse_peer_addr, PeersArgs};
 use std::{
     env,
@@ -293,10 +293,29 @@ async fn start_node(
 }
 
 fn monitor_node_events(mut node_events_rx: NodeEventsReceiver, ctrl_tx: mpsc::Sender<NodeCtrl>) {
+    let mut is_connected = false;
     let _handle = tokio::spawn(async move {
         loop {
             match node_events_rx.recv().await {
-                Ok(NodeEvent::ConnectedToNetwork) => Marker::NodeConnectedToNetwork.log(),
+                Ok(NodeEvent::AttemptingNetworkConnection) => {
+                    Marker::AttemptingNetworkConnection.log();
+                    let inactivity_timeout = Duration::from_secs(60);
+                    let node_event_sender = NodeEventsChannel::default();
+                    
+                    let _handle = tokio::spawn(async move {
+                        tokio::time::sleep(inactivity_timeout).await;
+                        node_event_sender.broadcast(NodeEvent::NetworkConnectionTimingOut);
+                    });
+                }
+                Ok(NodeEvent::NetworkConnectionTimingOut) => {
+                    if is_connected == false {
+                        Marker::NetworkConnectionTimingOut.log();
+                    }
+                }
+                Ok(NodeEvent::ConnectedToNetwork) => {
+                    is_connected = true;
+                    Marker::NodeConnectedToNetwork.log();
+                }
                 Ok(NodeEvent::ChannelClosed) | Err(RecvError::Closed) => {
                     if let Err(err) = ctrl_tx
                         .send(NodeCtrl::Stop {
